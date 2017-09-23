@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<head>
+    <meta name="" charset="UTF-8" content="">
+    <title>test</title>
+    <style>
+                html{height: 100%}
+        body{margin: 0;height: 100%;
+            background: #fff;}
+        canvas{display: block;width: 100%;height: 100%;}
+        .body_content{
+            position: absolute;
+            top:30%;
+            left: 20%;
+            height: 20%;
+            background: palevioletred;
+            width: 20%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+</body> 
+<script>
+    class Circle{
+        //创建对象
+        //设置圆的位置，半径，移动距离
+        constructor(x,y){
+            this.x=x;
+            this.y=y;
+            this.r=Math.random()*10;
+            this._mx=Math.random();
+            this._my=Math.random();
+        }
+        //用canvas画圆
+        drawCircle(ctx){
+            ctx.beginPath();
+            ctx.arc(this.x,this.y,this.r,0,360);
+            ctx.closePath();
+            ctx.fillStyle='rgba(204,204,204,0.3)';
+            ctx.fill();
+        }
+        //画直线就是两个圆的连线，避免直线过多，给圆设置一个距离，距离很远的的圆不能连线
+        drawLine(ctx,_circle){
+            let dx = this.x - _circle.x;
+            let dy = this.y - _circle.y;
+            let d = Math.sqrt(dx * dx + dy * dy)
+            if(d<150){
+                ctx.beginPath();
+                ctx.moveTo(this.x,this.y);
+                ctx.lineTo(_circle.x,_circle.y);
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(204, 204, 204, 0.3)';
+                ctx.stroke()
+            }
+        }
+        //圆圈移动，在屏幕范围之内
+        move(w,h){
+            this._mx=(this.x<w&&this.x>0)?this._mx:(-this.x);
+            this._my=(this.y<h&&this.y>0)?this._my:(-this.y);
+            this.x+=this._mx/2;
+            this.y+=this._my/2;
+        }
+        //鼠标点击圆闪烁变动      
+    }
+     class currentCirle extends Circle{
+         constructor(x,y){
+             super(x,y)
+         }
+
+         drawCircle(ctx){
+             ctx.beginPath();
+             this.r=8;
+             ctx.arc(this.x,this.y,this.r,0,360);
+             ctx.closePath();
+             ctx.fillStyle='rgba(255,77,54,0.6)';
+             ctx.fill();
+
+         }      
+    }
+//更新页面用requestAnimationFrame替代setTimeout
+window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+
+let canvas = document.getElementById('canvas'); //找到画布
+let ctx = canvas.getContext('2d'); //创建2D
+let w = canvas.width = canvas.offsetWidth;  //设置宽度
+let h = canvas.height = canvas.offsetHeight; //设置高度
+let circles = []; //圆圈的数组
+let current_circle = new currentCirle(0, 0)  //
+
+let draw = function () {
+    //清空屏幕
+    ctx.clearRect(0, 0, w, h);
+
+    for (let i = 0; i < circles.length; i++) {
+        //圆圈移动
+        circles[i].move(w, h);
+        //画圆
+        circles[i].drawCircle(ctx);
+        for (j = i + 1; j < circles.length; j++) {
+            //画线
+            circles[i].drawLine(ctx, circles[j])
+        }
+    }
+    if (current_circle.x) {
+        //鼠标点击圆画圆
+        current_circle.drawCircle(ctx);
+        for (var k = 1; k < circles.length; k++) {
+            //鼠标点击画线
+            current_circle.drawLine(ctx, circles[k])
+        }
+    }
+    //数据更新
+    requestAnimationFrame(draw)
+}
+
+let init = function (num) {
+    for (var i = 0; i < num; i++) {
+        //向数组添加坐标
+        circles.push(new Circle(Math.random() * w, Math.random() * h));
+    }
+    //调用画圆，画线和鼠标点击函数
+    draw();
+}
+//添加监听器
+window.addEventListener('load', init(60));
+//鼠标移动事件
+window.onmousemove = function (e) {
+    e = e || window.event;
+    current_circle.x = e.clientX;
+    current_circle.y = e.clientY;
+}
+
+//鼠标移出事件
+window.onmouseout = function () {
+    current_circle.x = null;
+    current_circle.y = null;
+
+};
+</script>
